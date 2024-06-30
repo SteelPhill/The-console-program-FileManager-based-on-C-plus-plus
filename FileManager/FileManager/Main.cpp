@@ -4,253 +4,18 @@
 #include <Windows.h>
 using namespace std;
 using namespace std::filesystem;
-
-class Component
-{
-public:
-    virtual void Add(const string& name) = 0;
-    virtual void Remove() = 0;
-    virtual void Rename(const string& newName) = 0;
-    virtual void Copy() = 0;
-    virtual void Relocate() = 0;
-    virtual unsigned long long GetSizeInBytes() const = 0;
-};
-
-class Directory : public Component
-{
-    string directoryPath;
-
-    int DirectoryItemsNumber() const
-    {
-        int count = 1;
-        for (const directory_entry& dir_entry : directory_iterator(directoryPath))
-            count++;
-
-        return --count;
-    }
-
-    unsigned long long GetSizeInBytesByRecursive(const string& directoryPath) const
-    {
-        unsigned long long size = 0;
-
-        if (!exists(directoryPath))
-            return 0;
-
-        if (is_directory(directoryPath))
-        {
-            directory_iterator m_dir_itr(directoryPath);
-
-            for (m_dir_itr = begin(m_dir_itr); m_dir_itr != end(m_dir_itr); ++m_dir_itr)
-            {
-                directory_entry m_dir_entry = *m_dir_itr;
-                if (is_regular_file(m_dir_entry.path()))
-                {
-                    size += file_size(m_dir_entry.path());
-                }
-                else if (is_directory(m_dir_entry.path()))
-                {
-                    size += GetSizeInBytesByRecursive(m_dir_entry.path().string());
-                }
-            }
-
-            return size;
-        }
-        else if (is_regular_file(directoryPath))
-        {
-            return file_size(directoryPath);
-        }
-    }
-
-public:
-    Directory()
-    {
-        const string PathToExecutableFile = __FILE__;
-        directoryPath = current_path().string();
-    }
-
-    string GetDirectoryPath() const
-    {
-        return directoryPath;
-    }
-
-    string SelectDirectoryItem() const
-    {
-        string ReturnSymbol = "";
-
-        ShowContent();
-
-        int itemsNumber = DirectoryItemsNumber();
-
-        string enteredLine;
-        int selectedItem;
-
-        cout << endl << "Enter the item number and press \"Enter\"" << endl;
-        cout << "Or press \"Enter\" to return to the main menu" << endl;
-
-        do
-        {
-            cout << " => ";
-            getline(cin, enteredLine);
-
-            if (enteredLine == ReturnSymbol)
-                return "";
-
-            try
-            {
-                selectedItem = stoi(enteredLine);
-            }
-            catch (...)
-            {
-                continue;
-            }
-
-            if (selectedItem < 1 || selectedItem > itemsNumber)
-            {
-                continue;
-            }
-
-            break;
-
-        } while (true);
-
-        int count = 1;
-        for (auto& i : directory_iterator(directoryPath))
-        {
-            if (selectedItem == count)
-
-                return i.path().string();
-            count++;
-        }
-    }
-
-    void ShowContent() const
-    {
-        int count = 1;
-        for (const directory_entry& dir_entry : directory_iterator(directoryPath))
-            cout << count++ << ": " << dir_entry.path() << endl;
-    }
-
-    void Previous()
-    {
-        directoryPath = directoryPath.substr(0, directoryPath.rfind("\\"));
-
-        if (directoryPath.find("\\") == directoryPath.npos)
-            directoryPath += "\\";
-    }
-
-    void GoToSelectedDirectory(const string& newPath)
-    {
-        if (!is_directory(newPath))
-            throw string("this is not a directory");
-
-        for (auto& i : directory_iterator(directoryPath))
-        {
-            if (newPath == i.path().string())
-            {
-                directoryPath = i.path().string();
-                break;
-            }
-        }
-    }
-
-    void Add(const string& name) override
-    {
-
-    }
-
-    void Remove() override
-    {
-
-    }
-
-    void Rename(const string& name) override
-    {
-
-    }
-
-    void Copy() override
-    {
-
-    }
-
-    void Relocate() override
-    {
-
-    }
-
-    unsigned long long GetSizeInBytes() const override
-    {
-        return GetSizeInBytesByRecursive(directoryPath);
-    }
-};
-
-class File : public Component
-{
-    string name;
-
-public:
-    File(const string& name)
-    {
-        this->name = name;
-    }
-
-    string GetName() const
-    {
-        return name;
-    }
-
-    void Add(const string& name) override
-    {
-
-    }
-
-    void Remove() override
-    {
-
-    }
-
-    void Rename(const string& name) override
-    {
-
-    }
-
-    void Copy() override
-    {
-
-    }
-
-    void Relocate() override
-    {
-
-    }
-
-    unsigned long long GetSizeInBytes() const override
-    {
-        return 0;
-    }
-};
+#include "ClassComponent.h"
+#include "ClassDirectory.h"
+#include "ClassFile.h"
 
 class FileManagerMenus
 {
+    Component* component;
+
+    static const int EnterCode = 13;
     static const int EscCode = 27;
-    static const int SpaceCode = 32;
 
-    enum class MenusItems
-    {
-        firstItem = '1',
-        secondItem = '2',
-        thirdItem = '3',
-        fourthItem = '4',
-        fifthItem = '5',
-        sixthItem = '6',
-        seventhItem = '7',
-        eighthItem = '8',
-        ninthItem = '9',
-        show = SpaceCode,
-        exit = EscCode
-    };
-
-    MenusItems SelectingItem(const char beginRange, const char endRange)
+    int SelectingItem(const char beginRange, const char endRange)
     {
         int choice;
 
@@ -260,81 +25,126 @@ class FileManagerMenus
         {
             choice = _getch();
 
-        } while (choice != SpaceCode && choice != EscCode && choice < beginRange || choice > endRange);
+        } while (choice != EnterCode && choice != EscCode && choice < beginRange || choice > endRange);
 
-        return (MenusItems)choice;
+        return choice;
     }
 
-    /* void AddMenu(const Directory& directory)
-     {
-         cout << "Location:\t" << directory.GetDirectoryPath() << endl << endl;
-         cout << "1:\tAdd directory" << endl;
-         cout << "2:\tAdd file" << endl;
-         cout << "Esc:\tReturn to the main menu" << endl;
+    string EnterDirectoryPath() const
+    {
 
-         MenusItems choice = SelectingItem('1', '2');
+    }
 
-         switch (choice)
-         {
-         case FileManagerMenus::MenusItems::firstItem:
-         {
+    void AddMenu(const string& path)
+    {
+        enum class MenuItems
+        {
+            addDirectory = '1',
+            addFile = '2',
+            returnToMainMenu1 = EnterCode,
+            returnToMainMenu2 = EscCode
+        };
 
-             break;
-         }
-         case FileManagerMenus::MenusItems::secondItem:
-         {
+        cout << "Location:" << endl << path << endl << endl;
+        cout << "1:         Add directory" << endl;
+        cout << "2:         Add file" << endl;
+        cout << "Enter\\Esc: Return to the main menu" << endl;
 
-             break;
-         }
-         case FileManagerMenus::MenusItems::exit:
-         {
-             return;
-         }
-         }
-     }*/
+        int choice = SelectingItem('1', '2');
+
+        cout << endl << endl << "Enter the name and press \"Enter\"" << endl;
+        cout << "Or press \"Enter\" to return to the main menu" << endl;
+
+        string enteredLine;
+
+        cout << endl << " => ";
+        getline(cin, enteredLine);
+
+        if (enteredLine == "")
+            return;
+
+        switch ((MenuItems)choice)
+        {
+        case MenuItems::addDirectory:
+        {
+            component = dynamic_cast<Directory*>(new Directory(path));
+            component->Add(enteredLine);
+            break;
+        }
+        case MenuItems::addFile:
+        {
+            component = dynamic_cast<File*>(new File(path));
+            component->Add(enteredLine);
+            break;
+        }
+        case MenuItems::returnToMainMenu1:
+        case MenuItems::returnToMainMenu2:
+        {
+            return;
+        }
+        }
+
+        delete component;
+    }
 
 public:
     void MainMenu()
     {
+        enum class MenuItems
+        {
+            previousDirectory = '1',
+            goToDirectorySelectedFromList = '2',
+            goToDirectoryUsingManuallyEnteredPath = '3',
+            maskSearch = '4',
+            addNewDirectoryOrFile = '5',
+            removeDirectoryOrFile = '6',
+            copyDirectoryOrFile = '7',
+            relocateDirectoryOrFile = '8',
+            renameDirectoryOrFile = '9',
+            getSizeDirectoryOrFile = '0',
+            showDirectoryContent = EnterCode,
+            exit = EscCode
+        };
+
         Directory directory;
 
         do
         {
+            cout << "Location:" << endl << directory.GetPath() << endl << endl;
+            cout << "1:     Previous directory" << endl;
+            cout << "2:     Go to the directory selected from the list" << endl;
+            cout << "3:     Go to the directory using the manually entered path" << endl;
+            cout << "4:     Mask search in current and nested directories" << endl;
+            cout << "5:     Add new directory\\file to this directory" << endl;
+            cout << "6:     Remove directory\\file from this directory" << endl;
+            cout << "7:     Copy directory\\file" << endl;
+            cout << "8:     Relocate directory\\file" << endl;
+            cout << "9:     Rename directory\\file" << endl;
+            cout << "0:     Get size directory\\file" << endl;
+            cout << "Enter: Show contents of directory" << endl;
+            cout << "Esc:   Exit the program" << endl;
 
-            cout << "Location:" << endl << directory.GetDirectoryPath() << endl << endl;
-            cout << "1: Previous directory" << endl;
-            cout << "2: Select next one directory" << endl;
-            cout << "3: Go to the directory using the entered path" << endl;
-            cout << "4: Add new directory//file" << endl;
-            cout << "5: Remove directory//file" << endl;
-            cout << "6: Copy directory//file" << endl;
-            cout << "7: Relocate directory//file" << endl;
-            cout << "8: Rename directory//file" << endl;
-            cout << "9: Get size directory//file" << endl;
-            cout << "Space: Show contents of directory" << endl;
-            cout << "Esc: Exit the program" << endl;
-
-            MenusItems choice = SelectingItem('1', '9');
+            int choice = SelectingItem('0', '9');
 
             system("cls");
 
-            switch (choice)
+            switch ((MenuItems)choice)
             {
-            case MenusItems::firstItem:
+            case MenuItems::previousDirectory:
             {
                 directory.Previous();
                 break;
             }
-            case MenusItems::secondItem:
+            case MenuItems::goToDirectorySelectedFromList:
             {
-                cout << "Contents of directory:" << endl << directory.GetDirectoryPath() << endl << endl;
-                string choice = directory.SelectDirectoryItem();
-                if (choice.empty())
+                cout << "Contents of directory:" << endl << directory.GetPath() << endl << endl;
+                string chosenDirectory = directory.SelectDirectoryItem();
+                if (chosenDirectory.empty())
                     break;
 
                 try
                 {
-                    directory.GoToSelectedDirectory(choice);
+                    directory.GoToSelectedDirectory(chosenDirectory);
                 }
                 catch (const string& error)
                 {
@@ -344,50 +154,107 @@ public:
 
                 break;
             }
-            case MenusItems::thirdItem:
+            case MenuItems::goToDirectoryUsingManuallyEnteredPath:
             {
-                //AddMenu(directory);
+                cout << "Enter the path and press \"Enter\"" << endl;
+                cout << "Or press \"Enter\" to return to the main menu" << endl;
+
+                string enteredLine;
+
+                cout << " => ";
+                getline(cin, enteredLine);
+
+                if (enteredLine == "")
+                    break;
+
+                try
+                {
+                    directory.GoToSelectedDirectory(enteredLine);
+                }
+                catch (const string& error)
+                {
+                    cout << endl << "Error: " << error << endl << endl;
+                    system("pause");
+                }
+
                 break;
             }
-            case MenusItems::fourthItem:
+            case MenuItems::maskSearch:
             {
+                cout << "Enter the searched text and press \"Enter\"" << endl;
+                cout << "Or press \"Enter\" to return to the main menu" << endl;
+
+                string enteredLine;
+
+                cout << " => ";
+                getline(cin, enteredLine);
+
+                if (enteredLine == "")
+                    break;
+
+                try
+                {
+                    cout << endl << "Search result: " << endl << directory.MaskSearch(enteredLine) << endl;
+                }
+                catch (...)
+                {
+                    cout << endl << "Unexpected error in the search" << endl << endl;
+                }
+
+                system("pause");
                 break;
             }
-            case MenusItems::fifthItem:
+            case MenuItems::addNewDirectoryOrFile:
+            {
+                try
+                {
+                    AddMenu(directory.GetPath());
+                }
+                catch (const string& error)
+                {
+                    system("cls");
+                    cout << endl << "Error: " << error << endl << endl;
+                    system("pause");
+                }
+
+                break;
+            }
+            case MenuItems::removeDirectoryOrFile:
             {
 
                 break;
             }
-            case MenusItems::sixthItem:
+            case MenuItems::copyDirectoryOrFile:
             {
 
                 break;
             }
-            case MenusItems::seventhItem:
+            case MenuItems::relocateDirectoryOrFile:
             {
 
                 break;
             }
-            case MenusItems::eighthItem:
+            case MenuItems::renameDirectoryOrFile:
             {
 
                 break;
             }
-            case MenusItems::ninthItem:
+            case MenuItems::getSizeDirectoryOrFile:
             {
-                cout << "The size of the object located along the path:\t" << directory.GetDirectoryPath() << endl;
+                cout << "The size of the object located along the path:\t" << directory.GetPath() << endl;
                 cout << endl << directory.GetSizeInBytes() << " byte" << endl;
+                system("pause");
                 break;
             }
-            case MenusItems::show:
+            case MenuItems::showDirectoryContent:
             {
-                cout << "Contents of directory:" << endl << directory.GetDirectoryPath() << endl << endl;
+                cout << "Contents of directory:" << endl << directory.GetPath() << endl << endl;
                 directory.ShowContent();
                 cout << endl;
                 system("pause");
                 break;
             }
-            case MenusItems::exit:
+            case MenuItems::exit:
             {
                 cout << "Exiting the program . . ." << endl;
                 return;
