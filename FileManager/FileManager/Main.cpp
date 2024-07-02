@@ -27,30 +27,35 @@ class FileManagerMenus
 
         } while (choice != EnterCode && choice != EscCode && choice < beginRange || choice > endRange);
 
+        cout << endl;
         return choice;
     }
 
-    string EnterDirectoryPath() const
-    {
-
-    }
-
-    void AddMenu(const string& path)
+    void AddMenu(const Directory& directory)
     {
         enum class MenuItems
         {
-            addDirectory = '1',
-            addFile = '2',
-            returnToMainMenu1 = EnterCode,
-            returnToMainMenu2 = EscCode
+            AddDirectory = '1',
+            AddFile = '2',
+            Return1 = EnterCode,
+            Return2 = EscCode
         };
 
-        cout << "Location:" << endl << path << endl << endl;
+        cout << "Location:" << endl << directory.GetPath() << endl << endl;
         cout << "1:         Add directory" << endl;
         cout << "2:         Add file" << endl;
         cout << "Enter\\Esc: Return to the main menu" << endl;
 
         int choice = SelectingItem('1', '2');
+
+        switch ((MenuItems)choice)
+        {
+        case MenuItems::Return1:
+        case MenuItems::Return2:
+        {
+            return;
+        }
+        }
 
         cout << endl << endl << "Enter the name and press \"Enter\"" << endl;
         cout << "Or press \"Enter\" to return to the main menu" << endl;
@@ -65,22 +70,127 @@ class FileManagerMenus
 
         switch ((MenuItems)choice)
         {
-        case MenuItems::addDirectory:
+        case MenuItems::AddDirectory:
         {
-            component = dynamic_cast<Directory*>(new Directory(path));
+            component = dynamic_cast<Directory*>(new Directory(directory.GetPath()));
             component->Add(enteredLine);
             break;
         }
-        case MenuItems::addFile:
+        case MenuItems::AddFile:
         {
-            component = dynamic_cast<File*>(new File(path));
+            component = dynamic_cast<File*>(new File(directory.GetPath()));
             component->Add(enteredLine);
             break;
         }
-        case MenuItems::returnToMainMenu1:
-        case MenuItems::returnToMainMenu2:
+        }
+
+        delete component;
+    }
+
+    void RenameMenu(const Directory& directory)
+    {
+        enum class MenuItems
+        {
+            RenameDirectory = '1',
+            RenameFile = '2',
+            Return1 = EnterCode,
+            Return2 = EscCode
+        };
+
+        cout << "Location:" << endl << directory.GetPath() << endl << endl;
+        cout << "1:         Rename directory" << endl;
+        cout << "2:         Rename file" << endl;
+        cout << "Enter\\Esc: Return to the main menu" << endl;
+
+        int choice = SelectingItem('1', '2');
+
+        switch ((MenuItems)choice)
+        {
+        case MenuItems::Return1:
+        case MenuItems::Return2:
         {
             return;
+        }
+        }
+
+        string oldNamePath = directory.SelectDirectoryItem();
+        if (oldNamePath == "")
+            return;
+        string oldName = oldNamePath.substr(oldNamePath.rfind("\\") + 1, oldNamePath.size() - oldNamePath.rfind("\\"));
+
+        cout << endl << endl << "Enter the new name and press \"Enter\"" << endl;
+        cout << "Or press \"Enter\" to return to the main menu" << endl;
+        string newName;
+        cout << " => ";
+        getline(cin, newName);
+        if (newName == "")
+            return;
+
+        switch ((MenuItems)choice)
+        {
+        case MenuItems::RenameDirectory:
+        {
+            component = dynamic_cast<Directory*>(new Directory(directory.GetPath()));
+            component->Rename(oldName, newName);
+            break;
+        }
+        case MenuItems::RenameFile:
+        {
+            string extension = oldNamePath.substr(oldNamePath.rfind("."), oldNamePath.size() - oldNamePath.rfind("."));
+            component = dynamic_cast<File*>(new File(directory.GetPath()));
+            component->Rename(oldName, newName + extension);
+            break;
+        }
+        }
+
+        delete component;
+    }
+
+    void RemoveMenu(const Directory& directory)
+    {
+        enum class MenuItems
+        {
+            RemovingDirectory = '1',
+            RemovingFile = '2',
+            Return1 = EnterCode,
+            Return2 = EscCode
+        };
+
+        cout << "Location:" << endl << directory.GetPath() << endl << endl;
+        cout << "1:         Remove directory" << endl;
+        cout << "2:         Remove file" << endl;
+        cout << "Enter\\Esc: Return to the main menu" << endl;
+
+        int choice = SelectingItem('1', '2');
+
+        switch ((MenuItems)choice)
+        {
+        case MenuItems::Return1:
+        case MenuItems::Return2:
+        {
+            return;
+        }
+        }
+
+        string removeNamePath = directory.SelectDirectoryItem();
+        if (removeNamePath == "")
+            return;
+        string removeName = removeNamePath.substr(removeNamePath.rfind("\\") + 1, removeNamePath.size() - removeNamePath.rfind("\\"));
+
+
+        switch ((MenuItems)choice)
+        {
+        case MenuItems::RemovingDirectory:
+        {
+            component = dynamic_cast<Directory*>(new Directory(directory.GetPath()));
+            component->Remove(removeName);
+            break;
+        }
+        case MenuItems::RemovingFile:
+        {
+            component = dynamic_cast<File*>(new File(directory.GetPath()));
+            component->Remove(removeName);
+            break;
         }
         }
 
@@ -92,18 +202,18 @@ public:
     {
         enum class MenuItems
         {
-            previousDirectory = '1',
-            goToDirectorySelectedFromList = '2',
-            goToDirectoryUsingManuallyEnteredPath = '3',
-            maskSearch = '4',
-            addNewDirectoryOrFile = '5',
-            removeDirectoryOrFile = '6',
-            copyDirectoryOrFile = '7',
-            relocateDirectoryOrFile = '8',
-            renameDirectoryOrFile = '9',
-            getSizeDirectoryOrFile = '0',
-            showDirectoryContent = EnterCode,
-            exit = EscCode
+            PreviousDirectory = '1',
+            GoToDirectorySelectedFromList = '2',
+            GoToDirectoryUsingManuallyEnteredPath = '3',
+            SubstringSearch = '4',
+            AddNewDirectoryOrFile = '5',
+            RemoveDirectoryOrFile = '6',
+            CopyDirectoryOrFile = '7',
+            RelocateDirectoryOrFile = '8',
+            RenameDirectoryOrFile = '9',
+            GetByteSizeDirectoryOrFile = '0',
+            ShowDirectoryContent = EnterCode,
+            Exit = EscCode
         };
 
         Directory directory;
@@ -114,7 +224,7 @@ public:
             cout << "1:     Previous directory" << endl;
             cout << "2:     Go to the directory selected from the list" << endl;
             cout << "3:     Go to the directory using the manually entered path" << endl;
-            cout << "4:     Mask search in current and nested directories" << endl;
+            cout << "4:     Substring search in current and nested directories" << endl;
             cout << "5:     Add new directory\\file to this directory" << endl;
             cout << "6:     Remove directory\\file from this directory" << endl;
             cout << "7:     Copy directory\\file" << endl;
@@ -130,12 +240,12 @@ public:
 
             switch ((MenuItems)choice)
             {
-            case MenuItems::previousDirectory:
+            case MenuItems::PreviousDirectory:
             {
                 directory.Previous();
                 break;
             }
-            case MenuItems::goToDirectorySelectedFromList:
+            case MenuItems::GoToDirectorySelectedFromList:
             {
                 cout << "Contents of directory:" << endl << directory.GetPath() << endl << endl;
                 string chosenDirectory = directory.SelectDirectoryItem();
@@ -154,7 +264,7 @@ public:
 
                 break;
             }
-            case MenuItems::goToDirectoryUsingManuallyEnteredPath:
+            case MenuItems::GoToDirectoryUsingManuallyEnteredPath:
             {
                 cout << "Enter the path and press \"Enter\"" << endl;
                 cout << "Or press \"Enter\" to return to the main menu" << endl;
@@ -179,7 +289,7 @@ public:
 
                 break;
             }
-            case MenuItems::maskSearch:
+            case MenuItems::SubstringSearch:
             {
                 cout << "Enter the searched text and press \"Enter\"" << endl;
                 cout << "Or press \"Enter\" to return to the main menu" << endl;
@@ -194,7 +304,7 @@ public:
 
                 try
                 {
-                    cout << endl << "Search result: " << endl << directory.MaskSearch(enteredLine) << endl;
+                    cout << endl << "Search result: " << endl << directory.substringSearch(enteredLine) << endl;
                 }
                 catch (...)
                 {
@@ -204,11 +314,11 @@ public:
                 system("pause");
                 break;
             }
-            case MenuItems::addNewDirectoryOrFile:
+            case MenuItems::AddNewDirectoryOrFile:
             {
                 try
                 {
-                    AddMenu(directory.GetPath());
+                    AddMenu(directory);
                 }
                 catch (const string& error)
                 {
@@ -219,34 +329,54 @@ public:
 
                 break;
             }
-            case MenuItems::removeDirectoryOrFile:
+            case MenuItems::RemoveDirectoryOrFile:
+            {
+                try
+                {
+                    RemoveMenu(directory);
+                }
+                catch (const string& error)
+                {
+                    system("cls");
+                    cout << endl << "Error: " << error << endl << endl;
+                    system("pause");
+                }
+
+                break;
+            }
+            case MenuItems::CopyDirectoryOrFile:
             {
 
                 break;
             }
-            case MenuItems::copyDirectoryOrFile:
+            case MenuItems::RelocateDirectoryOrFile:
             {
 
                 break;
             }
-            case MenuItems::relocateDirectoryOrFile:
+            case MenuItems::RenameDirectoryOrFile:
             {
-
+                try
+                {
+                    RenameMenu(directory);
+                }
+                catch (const string& error)
+                {
+                    system("cls");
+                    cout << endl << "Error: " << error << endl << endl;
+                    system("pause");
+                }
+               
                 break;
             }
-            case MenuItems::renameDirectoryOrFile:
-            {
-
-                break;
-            }
-            case MenuItems::getSizeDirectoryOrFile:
+            case MenuItems::GetByteSizeDirectoryOrFile:
             {
                 cout << "The size of the object located along the path:\t" << directory.GetPath() << endl;
                 cout << endl << directory.GetSizeInBytes() << " byte" << endl;
                 system("pause");
                 break;
             }
-            case MenuItems::showDirectoryContent:
+            case MenuItems::ShowDirectoryContent:
             {
                 cout << "Contents of directory:" << endl << directory.GetPath() << endl << endl;
                 directory.ShowContent();
@@ -254,7 +384,7 @@ public:
                 system("pause");
                 break;
             }
-            case MenuItems::exit:
+            case MenuItems::Exit:
             {
                 cout << "Exiting the program . . ." << endl;
                 return;

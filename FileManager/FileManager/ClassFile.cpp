@@ -43,14 +43,24 @@ void File::Add(const string& name) const
     file.close();
 }
 
-void File::Remove() const
+void File::Remove(const string& name) const
 {
+    string namePath = fileDirectoryPath + "\\" + name;
 
+    if (!is_regular_file(namePath))
+        throw string("this is not a file");
+
+    remove(namePath);
 }
 
-void File::Rename(const string& name) const
+void File::Rename(const string& oldName, const string& newName) const
 {
+    string oldNameDirectoryPath = fileDirectoryPath + "\\" + oldName;
 
+    if (!is_regular_file(oldNameDirectoryPath))
+        throw string("this is not a file");
+
+    rename(oldNameDirectoryPath, fileDirectoryPath + "\\" + newName);
 }
 
 void File::Copy() const

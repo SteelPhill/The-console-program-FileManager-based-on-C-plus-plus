@@ -8,7 +8,7 @@ class Directory : public Component
 
     int DirectoryItemsNumber() const;
     unsigned long long GetSizeInBytesByRecursive(const string& directoryPath) const;
-    string MaskSearchByRecursive(const string& directoryPath, const string& searchedText) const;
+    string substringSearchByRecursive(const string& directoryPath, const string& searchedText) const;
 
 public:
     Directory();
@@ -16,13 +16,13 @@ public:
     virtual void SetPath(const string& path);
     virtual string GetPath() const;
     string SelectDirectoryItem() const;
-    string MaskSearch(const string& text);
+    string substringSearch(const string& text);
     void ShowContent() const;
     void Previous();
     void GoToSelectedDirectory(const string& newPath);
     virtual void Add(const string& name) const;
-    virtual void Remove() const;
-    virtual void Rename(const string& name) const;
+    virtual void Remove(const string& name) const;
+    virtual void Rename(const string& oldName, const string& newName) const;
     virtual void Copy() const;
     virtual void Relocate() const;
     virtual unsigned long long GetSizeInBytes() const;

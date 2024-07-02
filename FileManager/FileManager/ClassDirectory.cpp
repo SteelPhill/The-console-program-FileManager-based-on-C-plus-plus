@@ -46,7 +46,7 @@ unsigned long long Directory::GetSizeInBytesByRecursive(const string& directoryP
     }
 }
 
-string Directory::MaskSearchByRecursive(const string& directoryPath, const string& searchedText) const
+string Directory::substringSearchByRecursive(const string& directoryPath, const string& searchedText) const
 {
     string result;
 
@@ -67,7 +67,7 @@ string Directory::MaskSearchByRecursive(const string& directoryPath, const strin
             }
             else if (is_directory(dirEntry.path()))
             {
-                result += MaskSearchByRecursive(dirEntry.path().string(), searchedText);
+                result += substringSearchByRecursive(dirEntry.path().string(), searchedText);
             }
         }
     }
@@ -114,7 +114,7 @@ string Directory::SelectDirectoryItem() const
     int selectedItem;
 
     cout << endl << "Enter the item number and press \"Enter\"" << endl;
-    cout << "Or press \"Enter\" to return to the main menu" << endl;
+    cout << "Or press \"Enter\" to ignore" << endl;
 
     do
     {
@@ -152,12 +152,12 @@ string Directory::SelectDirectoryItem() const
     }
 }
 
-string Directory::MaskSearch(const string& searchedText)
+string Directory::substringSearch(const string& searchedText)
 {
     if (searchedText.empty())
         return "";
            
-    return MaskSearchByRecursive(directoryPath, searchedText);
+    return substringSearchByRecursive(directoryPath, searchedText);
 }
 
 void Directory::ShowContent() const
@@ -201,14 +201,24 @@ void Directory::Add(const string& name) const
         throw string("the directory has not been created");
 }
 
-void Directory::Remove() const
+void Directory::Remove(const string& name) const
 {
+    string namePath = directoryPath + "\\" + name;
 
+    if (!is_directory(namePath))
+        throw string("this is not a directory");
+
+    remove_all(namePath);
 }
 
-void Directory::Rename(const string& name) const
+void Directory::Rename(const string& oldName, const string& newName) const
 {
+    string oldNameDirectoryPath = directoryPath + "\\" + oldName;
 
+    if (!is_directory(oldNameDirectoryPath))
+        throw string("this is not a directory");
+
+    rename(oldNameDirectoryPath, directoryPath + "\\" + newName);
 }
 
 void Directory::Copy() const
